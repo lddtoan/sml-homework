@@ -6,8 +6,11 @@ import matplotlib.pyplot as plt
 
 BASE_DIR = pathlib.Path(__file__).parent.resolve()
 IMAGES_DIR = os.path.join(BASE_DIR, 'images')
+EXERCISE_DIR = os.path.join(IMAGES_DIR, 'e2.1')
 if not os.path.exists(IMAGES_DIR):
     os.mkdir(IMAGES_DIR)
+if not os.path.exists(EXERCISE_DIR):
+    os.mkdir(EXERCISE_DIR)
 
 
 def add_noise(x, y, total: int = 100, mean: float = 0.0, scale: float = 0.2):
@@ -75,21 +78,46 @@ def optimize_parameters(x, y, w, w0, lr, epoch):
     return (w, w0, loss)
 
 
+def predict(x, w, w0):
+    z = np.dot(w.T, x) + w0
+    a = sigmoid(z)
+    return a
+
+
 # Create XOR dataset
 x = np.array([(0, 0), (0, 1), (1, 0), (1, 1)])
-y = np.array([0, 0, 0, 1])
+y = np.array([0, 1, 1, 0])
 
 # Train
-cases = [
-    {'lr': 0.01, 'epoch': 1000},
+sizes = [10, 50, 100]
+configs = [
+    {'lr': 0.01, 'epoch': 10},
+    {'lr': 0.01, 'epoch': 100},
+    {'lr': 0.001, 'epoch': 10},
+    {'lr': 0.001, 'epoch': 100},
 ]
 
-w, w0 = intialize_parameters([1.0, 1.0], 0.0)
-x_noise, y_noise = add_noise(x, y)
+w, w0 = intialize_parameters([1.0, 1.0], 0.5)
 
-for case in cases:
+for size in sizes:
+    figure, axis = plt.subplots(2, 2, constrained_layout=True)
+    positions = [[0, 0], [0, 1], [1, 0], [1, 1]]
+    index = 0
+
+    x_noise, y_noise = add_noise(x, y, size)
+
     x_noise = x_noise.T
     y_noise = y_noise.T
-    _, _, loss = optimize_parameters(
-        x_noise, y_noise, w, w0, case['lr'],
-        case['epoch'])
+
+    for config in configs:
+
+        _, _, loss = optimize_parameters(
+            x_noise, y_noise, w, w0, config['lr'],
+            config['epoch'])
+
+        axis[positions[index][0], positions[index][1]].plot(loss)
+        axis[positions[index][0], positions[index][1]].set_title(
+            f'size: {size}, lr: {config["lr"]}, epoch: {config["epoch"]}')
+        index += 1
+
+    plt.savefig(os.path.join(EXERCISE_DIR, f's{size}.png'))
